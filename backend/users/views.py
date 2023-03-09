@@ -1,25 +1,59 @@
-from rest_framework import viewsets
 from rest_framework import status
+from rest_framework import viewsets
+
 from rest_framework.response import Response
+
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
+
 from rest_framework.permissions import IsAuthenticated
+
 from rest_framework.authentication import TokenAuthentication
+
 from rest_framework.decorators import action
 
+from django.db.models import Exists
+from django.db.models import OuterRef
+
 from .models import User
+from .models import SubscribeUser
 
 from .serializers import AuthTokenSerializer
 from .serializers import PasswordSerializer
+from .serializers import UserSerializer
+
+AUTH = dict(
+    permission_classes=[IsAuthenticated, ],
+    authentication_classes=[TokenAuthentication, ]
+)
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, ]
-    authentication_classes = [TokenAuthentication, ]
-    queryset = User.objects.all()
-    serializer_class = ...
+    queryset = User.objects.all().order_by("email")
+    serializer_class = UserSerializer
 
-    @action(detail=False, methods=['post'], url_path='set_password')
+    def get_queryset(self):
+        current_user = self.request.user
+        if current_user.is_anonymous:
+            return self.queryset
+        queryset = self.queryset.annotate(
+            is_subscribed=Exists(
+                SubscribeUser.objects.filter(
+                    owner=self.request.user,
+                    subscriber=OuterRef("pk")
+                )
+            )
+        )
+        return queryset
+
+    @action(detail=False, methods=['get'], url_path='me', **AUTH)
+    def get_current_user(self, request):
+        serializer = self.serializer_class(instance=request.user)
+        data = serializer.data
+        data["is_subscribed"] = False
+        return Response(data)
+
+    @action(detail=False, methods=['post'], url_path='set_password', **AUTH)
     def set_password(self, request):
         user = request.user
         serializer = PasswordSerializer(data=request.data, instance=user)
@@ -47,7 +81,7 @@ class TokenUserAuth(ObtainAuthToken):
         elif use_request == 'logout':
             auth = request.headers.get('Authorization')
             if auth:
-                token = Token.objects.filter(key=auth[7:])
+                token = Token.objects.filter(key=auth[6:])
                 if token.exists():
                     token.delete()
                     return Response(status=204)

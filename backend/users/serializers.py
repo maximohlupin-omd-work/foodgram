@@ -10,6 +10,30 @@ from django.utils.translation import gettext_lazy as _
 
 from rest_framework import serializers
 
+from .models import User
+
+
+class UserSerializer(serializers.ModelSerializer):
+    is_subscribed = serializers.BooleanField(read_only=True, default=False)
+    email = serializers.EmailField(required=True)
+    username = serializers.CharField(required=True)
+    first_name = serializers.CharField(required=True)
+    last_name = serializers.CharField(required=True)
+    password = serializers.CharField(write_only=True)
+
+    def create(self, validated_data):
+        return self.Meta.model.objects.create_user(
+            **validated_data
+        )
+
+    class Meta:
+        model = User
+        fields = (
+            'email', 'id', 'username',
+            'first_name', 'last_name', 'is_subscribed',
+            'password'
+        )
+
 
 class PasswordSerializer(serializers.Serializer):
     def update(self, instance, validated_data):
@@ -24,7 +48,7 @@ class PasswordSerializer(serializers.Serializer):
         if self.instance.check_password(current_password):
             return dict(password=new_password)
         raise serializers.ValidationError(
-            dict(current_password="Некорректное значение.")
+            dict(current_password='Некорректное значение.')
         )
 
     new_password = serializers.CharField(required=True)
@@ -43,7 +67,7 @@ class AuthTokenSerializer(serializers.Serializer):
         write_only=True
     )
     token = serializers.CharField(
-        label=_('Token'),
+        label=_("Token"),
         read_only=True
     )
 
@@ -58,10 +82,10 @@ class AuthTokenSerializer(serializers.Serializer):
         password = attrs.get('password')
 
         if email and password:
-            user = authenticate(
-                request=self.context.get('request'),
-                email=email, password=password
-            )
+            user = authenticate(request=self.context.get('request'),
+                                email=email, password=password)
+            print(authenticate(self.context.get("request"), email=email,
+                               password=password))
             if not user:
                 msg = _('Unable to log in with provided credentials.')
                 raise serializers.ValidationError(msg, code='authorization')

@@ -17,13 +17,13 @@ class User(auth_models.AbstractUser):
 class SubscribeUser(models.Model):
     owner = models.OneToOneField(
         User,
-        verbose_name="Автор подписки",
+        verbose_name="Пользователь",
         related_name="subscribe_model",
         on_delete=models.CASCADE
     )
     subscriber = models.ManyToManyField(
         User,
-        verbose_name="Подписчик",
+        verbose_name="Подписки пользователя",
         related_name="user_subscriptions",
         blank=True
     )

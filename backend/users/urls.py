@@ -5,7 +5,6 @@
     @ Author: Ohlupin Maxim
 
 """
-from django.urls import path
 from django.urls import re_path
 
 from rest_framework.routers import DefaultRouter
