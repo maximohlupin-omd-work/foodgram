@@ -19,6 +19,9 @@ class User(auth_models.AbstractUser):
     def __str__(self):
         return f"{self.pk}_{self.username}"
 
+    class Meta:
+        ordering = ('-id',)
+
 
 class SubscribeUser(models.Model):
     owner = models.OneToOneField(

@@ -29,9 +29,9 @@ AUTH = dict(
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all().order_by("email")
+    queryset = User.objects.all()
     serializer_class = UserSerializer
-    http_method_names = ["get", "post", ]
+    http_method_names = ("get", "post",)
 
     def get_queryset(self):
         current_user = self.request.user

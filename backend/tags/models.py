@@ -23,5 +23,6 @@ class Tag(models.Model):
         return f"Тэг_{self.name}"
 
     class Meta:
+        ordering = ('-id',)
         verbose_name = 'Тэг'
         verbose_name_plural = 'Тэги'
