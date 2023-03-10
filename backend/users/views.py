@@ -31,6 +31,7 @@ AUTH = dict(
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all().order_by("email")
     serializer_class = UserSerializer
+    http_method_names = ["get", "post", ]
 
     def get_queryset(self):
         current_user = self.request.user
@@ -66,6 +67,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class TokenUserAuth(ObtainAuthToken):
     serializer_class = AuthTokenSerializer
+    http_method_names = ["post", ]
 
     def post(self, request, *args, **kwargs):
         use_request = request.path.split('/')[-2]
