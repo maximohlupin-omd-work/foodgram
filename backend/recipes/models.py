@@ -1,10 +1,9 @@
 from django.db import models
+from django.core.validators import MinValueValidator
 
 from tags.models import Tag
 
 from users.models import User
-
-from .validators import more_zero_validator
 
 
 class Ingredient(models.Model):
@@ -14,7 +13,9 @@ class Ingredient(models.Model):
     )
     amount = models.IntegerField(
         verbose_name='Количество',
-        validators=[more_zero_validator, ]
+        validators=[
+            MinValueValidator(1, message="Должен быть больше единицы")
+        ],
     )
 
     def __str__(self):
@@ -32,22 +33,23 @@ class Recipe(models.Model):
     text = models.TextField(verbose_name='Описание')
     cooking_time = models.IntegerField(
         verbose_name='Время приготовления',
-        validators=[more_zero_validator, ]
+        validators=[
+            MinValueValidator(1, message="Время не может быть меньше 1")
+        ],
     )
 
     tags = models.ManyToManyField(Tag, verbose_name='Тэги')
 
-    author = models.OneToOneField(
+    author = models.ForeignKey(
         User,
         verbose_name='Автор',
         on_delete=models.CASCADE
     )
 
-    ingredients = models.ForeignKey(
+    ingredients = models.ManyToManyField(
         Ingredient,
         verbose_name='Ингридиенты',
-        related_name='recipe',
-        on_delete=models.CASCADE
+        related_name='recipe'
     )
 
     def __str__(self):
