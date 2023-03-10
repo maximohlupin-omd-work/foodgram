@@ -2,6 +2,8 @@ from django.db import models
 
 from django.contrib.auth import models as auth_models
 
+from rest_framework.authtoken.models import Token
+
 
 class User(auth_models.AbstractUser):
     email = models.EmailField(verbose_name="Email Address", unique=True)
@@ -9,6 +11,10 @@ class User(auth_models.AbstractUser):
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username", ]
+
+    @property
+    def is_authenticated(self):
+        return Token.objects.filter(user=self).exists()
 
     def __str__(self):
         return f"{self.pk}_{self.username}"
