@@ -6,27 +6,6 @@ from tags.models import Tag
 from users.models import User
 
 
-class Ingredient(models.Model):
-    name = models.CharField(max_length=200, verbose_name='Название')
-    measurement_unit = models.CharField(
-        max_length=200, verbose_name='Единицы измерения'
-    )
-    amount = models.IntegerField(
-        verbose_name='Количество',
-        validators=[
-            MinValueValidator(1, message="Должен быть больше единицы")
-        ],
-    )
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        ordering = ('-id',)
-        verbose_name = 'Ингридиент'
-        verbose_name_plural = 'Ингридиенты'
-
-
 class Recipe(models.Model):
     name = models.CharField(max_length=200, verbose_name='Название')
     image = models.ImageField(verbose_name='Ссылка на картинку на сайте')
@@ -46,12 +25,6 @@ class Recipe(models.Model):
         on_delete=models.CASCADE
     )
 
-    ingredients = models.ManyToManyField(
-        Ingredient,
-        verbose_name='Ингридиенты',
-        related_name='recipe'
-    )
-
     def __str__(self):
         return self.name
 
@@ -59,3 +32,31 @@ class Recipe(models.Model):
         ordering = ('-id',)
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
+
+
+class Ingredient(models.Model):
+    name = models.CharField(max_length=200, verbose_name='Название')
+    measurement_unit = models.CharField(
+        max_length=200, verbose_name='Единицы измерения'
+    )
+    amount = models.IntegerField(
+        verbose_name='Количество',
+        validators=[
+            MinValueValidator(1, message="Должен быть больше единицы")
+        ],
+    )
+
+    recipes = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        verbose_name="Для рецепта",
+        related_name="ingredients"
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ('-id',)
+        verbose_name = 'Ингридиент'
+        verbose_name_plural = 'Ингридиенты'
