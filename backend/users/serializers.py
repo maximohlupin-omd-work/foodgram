@@ -10,6 +10,8 @@ from django.utils.translation import gettext_lazy as _
 
 from rest_framework import serializers
 
+from recipes.models import Recipe
+
 from .models import User
 
 
@@ -32,6 +34,28 @@ class UserSerializer(serializers.ModelSerializer):
             'email', 'id', 'username',
             'first_name', 'last_name', 'is_subscribed',
             'password'
+        )
+
+
+class SubscriberRecipeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = (
+            'id', 'name', 'image', 'cooking_time'
+        )
+
+
+class SubscriptionsSerializer(UserSerializer):
+    recipes = SubscriberRecipeSerializer(many=True)
+    recipes_count = serializers.IntegerField(read_only=True)
+    is_subscribed = serializers.BooleanField(default=True)
+
+    class Meta:
+        model = User
+        fields = (
+            'recipes_count', 'email', 'id', 'username',
+            'first_name', 'last_name', 'is_subscribed',
+            'recipes'
         )
 
 

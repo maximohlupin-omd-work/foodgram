@@ -22,8 +22,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
     http_method_names = ('get', 'post', 'patch', 'delete',)
 
-    def create(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            data = request.data
-            # image = data["image"]
-        return Response(status=401)
+    # def create(self, request, *args, **kwargs):
+    #     if request.user.is_authenticated:
+    #         data = request.data
+    #         image = data["image"]
+    #     return Response(status=401)

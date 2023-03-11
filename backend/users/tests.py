@@ -7,6 +7,7 @@ from .models import User
 class UsersTestCase(APITestCase):
     @classmethod
     def setUp(cls) -> None:
+        print("--- Run UsersTestCase ---")
         super().setUpClass()
         user = User
 
@@ -146,7 +147,7 @@ class UsersTestCase(APITestCase):
         self._login_request()
         token = self.user.auth_token
         user_card = self.client.get(
-            f'/users/{self.user.pk}/',
+            f'/users/{self.another_user.pk}/',
             HTTP_AUTHORIZATION=f'Token {token}'
         )
         self.assertEqual(
