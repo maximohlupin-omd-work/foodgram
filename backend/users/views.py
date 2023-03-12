@@ -12,8 +12,10 @@ from rest_framework.authentication import TokenAuthentication
 
 from rest_framework.decorators import action
 
-from django.db.models import Exists, Count
+from django.db.models import Count
+from django.db.models import Exists
 from django.db.models import OuterRef
+from django.db.models import ObjectDoesNotExist
 
 from .models import User
 from .models import SubscribeUser
@@ -35,7 +37,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthOrReadOnly,)
-    http_method_names = ("get", "post",)
+    http_method_names = ('get', 'post', 'delete',)
 
     def get_queryset(self):
         current_user = self.request.user
@@ -47,7 +49,7 @@ class UserViewSet(viewsets.ModelViewSet):
             is_subscribed=Exists(
                 SubscribeUser.objects.filter(
                     owner=self.request.user,
-                    subscriber=OuterRef("id")
+                    subscriber=OuterRef('id')
                 )
             )
         )
@@ -88,6 +90,81 @@ class UserViewSet(viewsets.ModelViewSet):
 
         serializer = SubscriptionsSerializer(queryset, many=True)
         return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def perform_destroy(self, instance):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    @action(
+        methods=('post',), detail=False,
+        url_path='(?P<subscribe_id>[^/.]+)/subscribe',
+        **AUTH
+    )
+    def subscribe(self, request, subscribe_id: int):
+        user_id = request.user.id
+        if user_id == int(subscribe_id):
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST, data=dict(
+                    errors='Нельзя подписаться на самого себя'
+                )
+            )
+        another_user = User.objects.filter(id=subscribe_id)
+        if another_user.exists():
+            another_user = another_user.annotate(
+                recipes_count=Count('recipes')
+            ).first()
+            try:
+                subscribe_model = request.user.subscribe_model.subscriber
+                if subscribe_model.filter(id=another_user.id).exists():
+                    return Response(
+                        status=status.HTTP_400_BAD_REQUEST,
+                        data=dict(detail="Подписка уже создана!")
+                    )
+                subscribe_model.add(another_user)
+            except ObjectDoesNotExist:
+                subscribe_model = SubscribeUser.objects.create(
+                    owner=request.user
+                )
+                subscribe_model.subscriber.add(another_user)
+
+            serializer = SubscriptionsSerializer(another_user)
+
+            return Response(
+                data=serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            status=status.HTTP_404_NOT_FOUND,
+            data=dict(detail='Страница не найдена.')
+        )
+
+    @subscribe.mapping.delete
+    def subscribe_delete(self, request, subscribe_id: int):
+        user_id = request.user.id
+        if user_id == int(subscribe_id):
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST, data=dict(
+                    errors='Нельзя отписаться от самого себя'
+                )
+            )
+        another_user = User.objects.filter(id=subscribe_id)
+        if another_user.exists():
+            another_user = another_user.first()
+            try:
+                subscribe_model = request.user.subscribe_model.subscriber
+                if subscribe_model.filter(id=another_user.id).exists():
+                    subscribe_model.remove(another_user)
+                    return Response(
+                        status=status.HTTP_204_NO_CONTENT,
+                    )
+            except ObjectDoesNotExist:
+                ...
+        return Response(
+            status=status.HTTP_404_NOT_FOUND,
+            data=dict(detail='Страница не найдена.')
+        )
 
 
 class TokenUserAuth(ObtainAuthToken):
