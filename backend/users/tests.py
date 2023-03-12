@@ -2,12 +2,12 @@ from rest_framework.test import APITestCase
 from rest_framework.authtoken.models import Token
 
 from .models import User
+from .models import SubscribeUser
 
 
 class UsersTestCase(APITestCase):
     @classmethod
     def setUp(cls) -> None:
-        print("--- Run UsersTestCase ---")
         super().setUpClass()
         user = User
 
@@ -20,6 +20,12 @@ class UsersTestCase(APITestCase):
         cls.another_user = user.objects.create_user(
             username='another_author',
             email='another_author@gmail.com',
+            password='12345678'
+        )
+
+        cls.second_another_user = user.objects.create_user(
+            username='second',
+            email='second@gmail.com',
             password='12345678'
         )
 
@@ -159,10 +165,99 @@ class UsersTestCase(APITestCase):
         self._login_request()
         token = self.user.auth_token
         user_card = self.client.get(
-            f'/users/me/',
+            '/users/me/',
             HTTP_AUTHORIZATION=f'Token {token}',
         )
         self.assertEqual(
             user_card.status_code, 200, 'Некорректный HTTP STATUS'
         )
         self._assert_user_card(user_card.data)
+
+    def _create_subscribe_request(self, subscribe_id: int = 2):
+        self._login_request()
+        token = self.user.auth_token
+        return self.client.post(
+            f'/users/{subscribe_id}/subscribe/',
+            HTTP_AUTHORIZATION=f'Token {token}',
+        )
+
+    def _delete_subscribe_request(self, subscribe_id: int = 2):
+        self._login_request()
+        token = self.user.auth_token
+        return self.client.delete(
+            f'/users/{subscribe_id}/subscribe/',
+            HTTP_AUTHORIZATION=f'Token {token}',
+        )
+
+    def _get_subscribe_request(self):
+        self._login_request()
+        token = self.user.auth_token
+        return self.client.get(
+            '/users/subscriptions/',
+            HTTP_AUTHORIZATION=f'Token {token}',
+        )
+
+    def _assert_subscriptions_card(self, data):
+        keys = ['recipes_count', 'email', 'id',
+                'username', 'first_name', 'last_name',
+                'is_subscribed', ]
+        for k in keys:
+            self.assertNotEqual(
+                data.get(k), None, f'Ключ {k} отсутсвует в карточке подписки'
+            )
+
+    def test_create_subscriptions(self):
+        rspn = self._create_subscribe_request()
+        self.assertEqual(rspn.status_code, 201, 'Некорректный HTTP STATUS')
+        data = rspn.data
+        self._assert_subscriptions_card(data)
+        count_subscribers = self.user.subscribe_model.subscriber.count()
+        self.assertEqual(count_subscribers, 1, 'Подписка не создалась')
+        self._create_subscribe_request(3)
+        count_subscribers = self.user.subscribe_model.subscriber.count()
+        self.assertEqual(
+            count_subscribers, 2,
+            'Подписка на другого пользователя не создалась'
+        )
+        false_rspn = self._create_subscribe_request(1)
+        self.assertEqual(
+            false_rspn.status_code, 400,
+            'Некорректный HTTP STATUS при подписке на самого себя'
+        )
+        count_subscribers = self.user.subscribe_model.subscriber.count()
+        self.assertEqual(
+            count_subscribers, 2,
+            'При подписке на самого себя изменилось кол-во подписок'
+        )
+        false_rspn = self._create_subscribe_request()
+        self.assertEqual(
+            false_rspn.status_code, 400,
+            'Некорректный HTTP STATUS при повторной подписке'
+        )
+        count_subscribers = self.user.subscribe_model.subscriber.count()
+        self.assertEqual(
+            count_subscribers, 2,
+            'При подписке на самого себя изменилось кол-во подписок у пользователя'
+        )
+
+    def test_delete_subscriptions(self):
+        self._create_subscribe_request()
+        self._create_subscribe_request(3)
+        rspn = self._delete_subscribe_request()
+        self.assertEqual(rspn.status_code, 204, 'Некорректный HTTP STATUS')
+        count_subscribers = self.user.subscribe_model.subscriber.count()
+        self.assertEqual(count_subscribers, 1, 'Подписка не удалена')
+        queryset = self.user.subscribe_model.subscriber.all()
+        self.assertEqual(3, queryset[0].pk, 'Удалена не та подписка')
+
+    def test_list_subscribers(self):
+        self._create_subscribe_request(2)
+        self._create_subscribe_request(3)
+        rspn = self._get_subscribe_request()
+        self._assert_paginated_data(rspn.data)
+        for d in rspn.data['results']:
+            self._assert_subscriptions_card(d)
+        self.assertEqual(
+            len(rspn.data['results']), 2,
+            'Вернулись слишком много пользователей, для них подписки не создавались'
+        )
