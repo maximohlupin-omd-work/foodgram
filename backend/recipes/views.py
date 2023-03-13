@@ -10,6 +10,7 @@ from rest_framework.response import Response
 
 from .models import Recipe
 from .serializers import RecipeSerializer
+from .serializers import RecipeInShopListSerializer
 
 AUTH = dict(
     permission_classes=[IsAuthenticated, ],
@@ -21,6 +22,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     http_method_names = ('get', 'post', 'patch', 'delete',)
+
+    @action(
+        methods=('post',), detail=False,
+        url_path='(?P<recipe_id>[^/.]+)/shopping_cart',
+        **AUTH
+    )
+    def add_in_shop_list(self, request, recipe_id):
+        ...
 
     # def create(self, request, *args, **kwargs):
     #     if request.user.is_authenticated:

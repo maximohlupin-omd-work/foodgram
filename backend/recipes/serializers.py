@@ -35,3 +35,11 @@ class RecipeSerializer(ModelSerializer):
             'ingredients',  # 'is_favorited', 'is_in_shopping_cart',
             'name', 'image', 'text', 'cooking_time'
         )
+
+
+class RecipeInShopListSerializer(ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = (
+            'id', 'name', 'image', 'cooking_time'
+        )
