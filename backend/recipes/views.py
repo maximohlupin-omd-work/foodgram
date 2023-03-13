@@ -5,7 +5,6 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 
-from django.db.models import Count
 from django.db.models import Exists
 from django.db.models import OuterRef
 
