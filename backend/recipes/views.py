@@ -37,7 +37,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return self.queryset.annotate(
                 is_in_shopping_cart=Exists(
                     current_user.shop_list.recipes.filter(
-                        id=OuterRef("id")
+                        id=OuterRef('id')
                     )
                 )
             )
@@ -56,7 +56,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             if shop_list.filter(id=recipe_id).exists():
                 return Response(
                     status=status.HTTP_400_BAD_REQUEST,
-                    data=dict(error="Уже добавлено")
+                    data=dict(error='Уже добавлено')
                 )
             recipe = recipe.first()
             shop_list.add(recipe)
@@ -67,7 +67,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             )
         return Response(
             status=status.HTTP_404_NOT_FOUND,
-            data=dict(error="Рецепт не найден")
+            data=dict(error='Рецепт не найден')
         )
 
     @add_in_shop_list.mapping.delete
@@ -84,11 +84,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 )
             return Response(
                 status=status.HTTP_400_BAD_REQUEST,
-                data=dict(error="Рецепт не был добавлен в список покупок")
+                data=dict(error='Рецепт не был добавлен в список покупок')
             )
         return Response(
             status=status.HTTP_404_NOT_FOUND,
-            data=dict(error="Рецепт не найден")
+            data=dict(error='Рецепт не найден')
         )
 
     @action(

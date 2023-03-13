@@ -43,15 +43,15 @@ class Ingredient(models.Model):
     amount = models.IntegerField(
         verbose_name='Количество',
         validators=[
-            MinValueValidator(1, message="Должен быть больше единицы")
+            MinValueValidator(1, message='Должен быть больше единицы')
         ],
     )
 
     recipes = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        verbose_name="Для рецепта",
-        related_name="ingredients"
+        verbose_name='Для рецепта',
+        related_name='ingredients'
     )
 
     def __str__(self):
@@ -66,20 +66,42 @@ class Ingredient(models.Model):
 class ShopList(models.Model):
     author = models.OneToOneField(
         User,
-        verbose_name="Пользователь",
-        related_name="shop_list",
+        verbose_name='Пользователь',
+        related_name='shop_list',
         on_delete=models.CASCADE
     )
 
     recipes = models.ManyToManyField(
         Recipe,
-        verbose_name="Рецепты"
+        verbose_name='Рецепты'
     )
 
     def __str__(self):
-        return f"Список покупок {self.author}"
+        return f'Список покупок {self.author}'
 
     class Meta:
         ordering = ('-id',)
-        verbose_name = "Список покупок"
-        verbose_name_plural = "Списки покупок"
+        verbose_name = 'Список покупок'
+        verbose_name_plural = 'Списки покупок'
+
+
+class Favorite(models.Model):
+    author = models.OneToOneField(
+        User,
+        verbose_name='Пользователь',
+        related_name='favorite',
+        on_delete=models.CASCADE
+    )
+
+    recipes = models.ManyToManyField(
+        Recipe,
+        verbose_name='Рецепты'
+    )
+
+    def __str__(self):
+        return f'Избранное_{self.author}'
+
+    class Meta:
+        ordering = ('-id',)
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранное'

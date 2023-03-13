@@ -12,6 +12,7 @@ from django.db.models.signals import post_save
 from rest_framework.authtoken.models import Token
 
 from recipes.models import ShopList
+from recipes.models import Favorite
 
 from .models import SubscribeUser
 
@@ -21,4 +22,5 @@ def create_auth_token(_, instance=None, created=False, **kwargs):
     if created:
         Token.objects.create(user=instance)
         ShopList.objects.create(author=instance)
+        Favorite.objects.create(author=instance)
         SubscribeUser.objects.create(owner=instance)
