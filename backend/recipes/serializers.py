@@ -5,8 +5,7 @@
     @ Author: Ohlupin Maxim
 
 """
-from rest_framework.serializers import Serializer
-from rest_framework.serializers import ModelSerializer
+from rest_framework import serializers
 
 from tags.serializers import TagSerializer
 from users.serializers import UserSerializer
@@ -15,7 +14,7 @@ from .models import Recipe
 from .models import Ingredient
 
 
-class IngredientSerializer(ModelSerializer):
+class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = (
@@ -23,21 +22,22 @@ class IngredientSerializer(ModelSerializer):
         )
 
 
-class RecipeSerializer(ModelSerializer):
+class RecipeSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True)
     author = UserSerializer(many=False)
     ingredients = IngredientSerializer(many=True)
+    is_in_shopping_cart = serializers.BooleanField(default=False)
 
     class Meta:
         model = Recipe
         fields = (
             'id', 'tags', 'author',
-            'ingredients',  # 'is_favorited', 'is_in_shopping_cart',
+            'ingredients', 'is_in_shopping_cart',  # 'is_favorited',
             'name', 'image', 'text', 'cooking_time'
         )
 
 
-class RecipeInShopListSerializer(ModelSerializer):
+class RecipeInShopListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = (
