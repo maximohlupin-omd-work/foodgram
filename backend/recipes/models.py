@@ -61,3 +61,25 @@ class Ingredient(models.Model):
         ordering = ('-id',)
         verbose_name = 'Ингридиент'
         verbose_name_plural = 'Ингридиенты'
+
+
+class ShopList(models.Model):
+    author = models.OneToOneField(
+        User,
+        verbose_name="Пользователь",
+        related_name="shop_list",
+        on_delete=models.CASCADE
+    )
+
+    recipes = models.ManyToManyField(
+        Recipe,
+        verbose_name="Рецепты"
+    )
+
+    def __str__(self):
+        return f"Список покупок {self.author}"
+
+    class Meta:
+        ordering = ('-id',)
+        verbose_name = "Список покупок"
+        verbose_name_plural = "Списки покупок"
