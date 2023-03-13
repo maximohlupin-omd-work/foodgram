@@ -14,7 +14,7 @@ from users.permissions import IsAuthOrReadOnly
 from .models import Recipe
 
 from .serializers import RecipeSerializer
-from .serializers import RecipeInShopListSerializer
+from .serializers import RecipeInSerializer
 
 from .utils import download_csv
 
@@ -39,6 +39,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     current_user.shop_list.recipes.filter(
                         id=OuterRef('id')
                     )
+                ),
+                is_favorited=Exists(
+                    current_user.favorite.recipes.filter(
+                        id=OuterRef('id')
+                    )
                 )
             )
         return self.queryset
@@ -60,7 +65,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 )
             recipe = recipe.first()
             shop_list.add(recipe)
-            serializer = RecipeInShopListSerializer(recipe)
+            serializer = RecipeInSerializer(recipe)
             return Response(
                 status=status.HTTP_201_CREATED,
                 data=serializer.data
@@ -101,6 +106,53 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipes = current_user.shop_list.recipes.all()
         return download_csv(recipes)
 
+    @action(
+        methods=('post',), detail=False,
+        url_path='(?P<recipe_id>[^/.]+)/favorite',
+        **AUTH
+    )
+    def add_to_favorite(self, request, recipe_id):
+        current_user = request.user
+        recipe = Recipe.objects.filter(id=recipe_id)
+        if recipe.exists():
+            favorite = current_user.favorite.recipes
+            if favorite.filter(id=recipe_id).exists():
+                return Response(
+                    status=status.HTTP_400_BAD_REQUEST,
+                    data=dict(error='Уже добавлено')
+                )
+            recipe = recipe.first()
+            favorite.add(recipe)
+            serializer = RecipeInSerializer(recipe)
+            return Response(
+                status=status.HTTP_201_CREATED,
+                data=serializer.data
+            )
+        return Response(
+            status=status.HTTP_404_NOT_FOUND,
+            data=dict(error='Рецепт не найден')
+        )
+
+    @add_to_favorite.mapping.delete
+    def remove_from_favorite(self, request, recipe_id):
+        current_user = request.user
+        recipe = Recipe.objects.filter(id=recipe_id)
+        if recipe.exists():
+            favorite = current_user.favorite.recipes
+            if favorite.filter(id=recipe_id).exists():
+                recipe = recipe.first()
+                favorite.remove(recipe)
+                return Response(
+                    status=status.HTTP_204_NO_CONTENT,
+                )
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data=dict(error='Рецепт не был добавлен в список покупок')
+            )
+        return Response(
+            status=status.HTTP_404_NOT_FOUND,
+            data=dict(error='Рецепт не найден')
+        )
 # def create(self, request, *args, **kwargs):
 #     if request.user.is_authenticated:
 #         data = request.data

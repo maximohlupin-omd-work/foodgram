@@ -27,17 +27,18 @@ class RecipeSerializer(serializers.ModelSerializer):
     author = UserSerializer(many=False)
     ingredients = IngredientSerializer(many=True)
     is_in_shopping_cart = serializers.BooleanField(default=False)
+    is_favorited = serializers.BooleanField(default=False)
 
     class Meta:
         model = Recipe
         fields = (
             'id', 'tags', 'author',
-            'ingredients', 'is_in_shopping_cart',  # 'is_favorited',
+            'ingredients', 'is_in_shopping_cart', 'is_favorited',
             'name', 'image', 'text', 'cooking_time'
         )
 
 
-class RecipeInShopListSerializer(serializers.ModelSerializer):
+class RecipeInSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = (
