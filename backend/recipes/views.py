@@ -11,9 +11,11 @@ from django.db.models import OuterRef
 from users.permissions import IsAuthOrReadOnly
 
 from .models import Recipe
+from .models import IngredientUnit
 
 from .serializers import RecipeSerializer
 from .serializers import RecipeInSerializer
+from .serializers import IngredientUnitSerializer
 
 from .utils import download_csv
 
@@ -21,6 +23,12 @@ AUTH = dict(
     permission_classes=[IsAuthenticated, ],
     authentication_classes=[TokenAuthentication, ]
 )
+
+
+class IngredientUnitViewSet(viewsets.ModelViewSet):
+    queryset = IngredientUnit.objects.all()
+    serializer_class = IngredientUnitSerializer
+    http_method_names = ('get',)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):

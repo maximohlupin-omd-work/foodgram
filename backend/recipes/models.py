@@ -35,11 +35,29 @@ class Recipe(models.Model):
         verbose_name_plural = 'Рецепты'
 
 
-class Ingredient(models.Model):
+class IngredientUnit(models.Model):
     name = models.CharField(max_length=200, verbose_name='Название')
     measurement_unit = models.CharField(
         max_length=200, verbose_name='Единицы измерения'
     )
+
+    def __str__(self):
+        return f'Ингридиент {self.name}'
+
+    class Meta:
+        ordering = ('-id',)
+        verbose_name = 'Ингридиент'
+        verbose_name_plural = 'Ингридиенты'
+
+
+class Ingredient(models.Model):
+    ingredient_unit = models.ForeignKey(
+        IngredientUnit,
+        verbose_name="Ингридиент в рецепте",
+        related_name="in_recipe_ingredient",
+        on_delete=models.CASCADE
+    )
+
     amount = models.IntegerField(
         verbose_name='Количество',
         validators=[
@@ -55,12 +73,12 @@ class Ingredient(models.Model):
     )
 
     def __str__(self):
-        return self.name
+        return f'{self.ingredient_unit}'
 
     class Meta:
         ordering = ('-id',)
-        verbose_name = 'Ингридиент'
-        verbose_name_plural = 'Ингридиенты'
+        verbose_name = 'Ингридиент в рецепте'
+        verbose_name_plural = 'Ингридиенты в рецептах'
 
 
 class ShopList(models.Model):

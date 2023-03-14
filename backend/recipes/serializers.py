@@ -12,13 +12,29 @@ from users.serializers import UserSerializer
 
 from .models import Recipe
 from .models import Ingredient
+from .models import IngredientUnit
+
+
+class IngredientUnitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IngredientUnit
+        fields = "__all__"
 
 
 class IngredientSerializer(serializers.ModelSerializer):
+    ingredient_unit = IngredientUnitSerializer()
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        unit = data.pop('ingredient_unit')
+        unit.pop('id')
+        data.update(**unit)
+        return data
+
     class Meta:
         model = Ingredient
         fields = (
-            'id', 'name', 'measurement_unit', 'amount'
+            'id', 'ingredient_unit', 'amount'
         )
 
 
