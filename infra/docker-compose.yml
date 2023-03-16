@@ -1,17 +1,20 @@
 version: '3.3'
 services:
-
-#  frontend:
-#    build:
-#      context: ../frontend
-#      dockerfile: Dockerfile
-#    volumes:
-#      - ../frontend/:/app/result_build/
+  web:
+    container_name: foodgram_api
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
   nginx:
     image: nginx:1.19.3
+    container_name: foodgram_client
     ports:
       - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
-#      - ../frontend/build:/usr/share/nginx/html/
+      - ../frontend/build:/usr/share/nginx/html/
       - ../docs/:/usr/share/nginx/html/api/docs/
+    depends_on:
+      - web
