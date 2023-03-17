@@ -33,10 +33,10 @@ class IngredientUnitViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         query_params = self.request.query_params
 
-        name_filter = query_params.get("name")
+        name_filter = query_params.get('name')
         if name_filter:
             return self.queryset.filter(
-                name__icontains=name_filter
+                name__icontains=name_filter[0]
             )
 
         return self.queryset
@@ -51,8 +51,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
+            query_params = self.request.query_params
             current_user = self.request.user
-            return self.queryset.annotate(
+            queryset = self.queryset.annotate(
                 is_in_shopping_cart=Exists(
                     current_user.shop_list.recipes.filter(
                         id=OuterRef('id')
@@ -64,6 +65,25 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     )
                 )
             )
+
+            is_favorited = query_params.get('is_favorited')
+            is_in_shopping_cart = query_params.get('is_in_shopping_cart')
+            tags = query_params.get('tags')
+            if is_favorited:
+                queryset = queryset.filter(
+                    is_favorited=bool(int(is_favorited[0]))
+                )
+
+            if is_in_shopping_cart:
+                queryset = queryset.filter(
+                    is_in_shopping_cart=bool(int(is_in_shopping_cart[0]))
+                )
+
+            if tags:
+                queryset = queryset.filter(
+                    tags__slug__in=tags
+                )
+            return queryset
         return self.queryset
 
     @action(
