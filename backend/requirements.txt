@@ -2,7 +2,6 @@ asgiref==3.5.2
 cffi==1.15.1
 Django==4.1.4
 django-colorfield==0.8.0
-django-extensions==3.2.1
 djangorestframework==3.14.0
 gevent==22.10.2
 greenlet==2.0.2

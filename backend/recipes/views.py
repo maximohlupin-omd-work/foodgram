@@ -30,6 +30,17 @@ class IngredientUnitViewSet(viewsets.ModelViewSet):
     serializer_class = IngredientUnitSerializer
     http_method_names = ('get',)
 
+    def get_queryset(self):
+        query_params = self.request.query_params
+
+        name_filter = query_params.get("name")
+        if name_filter:
+            return self.get_queryset().filter(
+                name__startswith=name_filter
+            )
+
+        return self.get_queryset()
+
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
