@@ -35,11 +35,11 @@ class IngredientUnitViewSet(viewsets.ModelViewSet):
 
         name_filter = query_params.get("name")
         if name_filter:
-            return self.get_queryset().filter(
-                name__startswith=name_filter
+            return self.queryset.filter(
+                name__icontains=name_filter
             )
 
-        return self.get_queryset()
+        return self.queryset
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
