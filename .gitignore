@@ -1,6 +1,7 @@
 venv1/
 backend/static/
 backend/media/
+backend/.dockerignore
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

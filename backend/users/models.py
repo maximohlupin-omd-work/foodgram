@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.db import OperationalError
 from django.contrib.auth import models as auth_models
 
 from rest_framework.authtoken.models import Token
@@ -14,7 +14,10 @@ class User(auth_models.AbstractUser):
 
     @property
     def is_authenticated(self):
-        return Token.objects.filter(user=self).exists()
+        try:
+            return Token.objects.filter(user=self).exists()
+        except (models.ObjectDoesNotExist, OperationalError):
+            return False
 
     def __str__(self):
         return f"{self.pk}_{self.username}"
