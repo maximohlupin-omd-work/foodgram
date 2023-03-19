@@ -5,9 +5,15 @@
     @ Author: Ohlupin Maxim
 
 """
+from django.shortcuts import get_object_or_404
+
 from rest_framework import serializers
 
+from drf_extra_fields.fields import Base64ImageField
+
+from tags.models import Tag
 from tags.serializers import TagSerializer
+
 from users.serializers import UserSerializer
 
 from .models import Recipe
@@ -64,3 +70,48 @@ class RecipeInSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'name', 'image', 'cooking_time'
         )
+
+
+class IngredientRelatedField(serializers.RelatedField):
+    def to_internal_value(self, data):
+        data.update(
+            ingredient_unit=get_object_or_404(
+                IngredientUnit, id=data.pop('id')
+            )
+        )
+        return data
+
+    def to_representation(self, value):
+        return dict(
+            amount=value.amount,
+            **IngredientUnitSerializer(value.ingredient_unit).data
+        )
+
+
+class CreateRecipeSerializer(serializers.ModelSerializer):
+    author = serializers.HiddenField(
+        default=serializers.CurrentUserDefault()
+    )
+    tags = serializers.PrimaryKeyRelatedField(
+        many=True, allow_empty=False, queryset=Tag.objects.all()
+    )
+    ingredients = IngredientRelatedField(
+        many=True, allow_empty=False, queryset=Ingredient
+    )
+
+    image = Base64ImageField()
+
+    def create(self, validated_data):
+        ingredients = validated_data.pop('ingredients')
+        recipe = super().create(validated_data)
+
+        for ingredient in ingredients:
+            Ingredient.objects.create(
+                recipes=recipe,
+                **ingredient
+            )
+        return recipe
+
+    class Meta:
+        model = Recipe
+        fields = '__all__'

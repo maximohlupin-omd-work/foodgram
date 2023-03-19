@@ -1,12 +1,12 @@
+from django.db.models import Exists
+from django.db.models import OuterRef
+
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
-
-from django.db.models import Exists
-from django.db.models import OuterRef
 
 from users.permissions import IsAuthOrReadOnly
 
@@ -15,6 +15,7 @@ from .models import IngredientUnit
 
 from .serializers import RecipeSerializer
 from .serializers import RecipeInSerializer
+from .serializers import CreateRecipeSerializer
 from .serializers import IngredientUnitSerializer
 
 from .utils import download_csv
@@ -191,8 +192,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             status=status.HTTP_404_NOT_FOUND,
             data=dict(error='Рецепт не найден')
         )
-# def create(self, request, *args, **kwargs):
-#     if request.user.is_authenticated:
-#         data = request.data
-#         image = data["image"]
-#     return Response(status=401)
+
+    def get_serializer_class(self):
+        if self.action in ('create', 'update'):
+            return CreateRecipeSerializer
+        return self.serializer_class
