@@ -1,1 +1,27 @@
-# praktikum_new_diplom
+# Foodgram - easy food social network
+
+### Фронтэнд это разработка из команды "Яндекс.Практикум"
+
+### Стэк разработки (Бэкенд)
+
+- Python 3.9
+- Django 4.1
+- DjangoRestFramework 3.14.0
+- gevent 22.10.2
+- gunicorn 20.1.0
+
+### Сборка
+
+- cd ./infra
+- docker-compose up -d -f docker-compose-prod.yml
+
+### Документация
+
+- http://localhost/api/docs/
+
+### Значения по умолчанию
+
+В докер-образе используется легковесная база SQLite3
+При пулл образа в базу будут записаны данные о тестовом пользователе
+Данные о тегах и ингридиентах и один готовый рецепт.
+
