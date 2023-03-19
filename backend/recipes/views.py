@@ -52,10 +52,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
     http_method_names = ('get', 'post', 'patch', 'delete',)
 
     def get_queryset(self):
+        query_params = self.request.query_params
+        tags = query_params.getlist('tags')
+        queryset = self.queryset
         if self.request.user.is_authenticated:
-            query_params = self.request.query_params
             current_user = self.request.user
-            queryset = self.queryset.annotate(
+            queryset = queryset.annotate(
                 is_in_shopping_cart=Exists(
                     current_user.shop_list.recipes.filter(
                         id=OuterRef('id')
@@ -70,7 +72,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
             is_favorited = query_params.get('is_favorited')
             is_in_shopping_cart = query_params.get('is_in_shopping_cart')
-            tags = query_params.get('tags')
             if is_favorited:
                 queryset = queryset.filter(
                     is_favorited=bool(int(is_favorited[0]))
@@ -80,14 +81,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(
                     is_in_shopping_cart=bool(int(is_in_shopping_cart[0]))
                 )
-
-            if tags:
-                print
-                queryset = queryset.filter(
-                    tags__slug__in=tags
-                )
-            return queryset
-        return self.queryset
+        if tags:
+            queryset = queryset.filter(
+                tags__slug__in=tags
+            )
+        return queryset
 
     @action(
         methods=('post',), detail=False,
