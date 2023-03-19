@@ -1,6 +1,5 @@
 from django.db.models import Exists
 from django.db.models import OuterRef
-from django.shortcuts import get_object_or_404
 
 from rest_framework import status
 from rest_framework import viewsets
@@ -30,6 +29,7 @@ AUTH = dict(
 class IngredientUnitViewSet(viewsets.ModelViewSet):
     queryset = IngredientUnit.objects.all()
     serializer_class = IngredientUnitSerializer
+    pagination_class = None
     http_method_names = ('get',)
 
     def get_queryset(self):
@@ -82,6 +82,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 )
 
             if tags:
+                print
                 queryset = queryset.filter(
                     tags__slug__in=tags
                 )

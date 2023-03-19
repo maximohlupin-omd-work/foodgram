@@ -54,6 +54,14 @@ class RecipeSerializer(serializers.ModelSerializer):
     is_favorited = serializers.BooleanField(
         read_only=True, default=False
     )
+    image = serializers.SerializerMethodField()
+
+    def get_image(self, value):
+        request = self.context["request"]
+        if request.headers.get("Host"):
+            real_host = request.headers.get("Host")
+            return f"http://{real_host}{value.image.url}"
+        return request.build_absolute_uri(value.image.url)
 
     class Meta:
         model = Recipe
