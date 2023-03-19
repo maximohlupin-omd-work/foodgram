@@ -112,6 +112,37 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
             )
         return recipe
 
+    def update(self, instance, validated_data):
+        ingredients = validated_data.pop('ingredients')
+        new_ids = {x['ingredient_unit'].id for x in ingredients}
+        old_ids = {
+            x['ingredient_unit__id'] for x in instance.ingredients.values(
+                'ingredient_unit__id'
+            )
+        }
+
+        to_update = new_ids - old_ids
+        to_delete = old_ids - new_ids
+
+        instance.ingredients.filter(
+            ingredient_unit__id__in=to_delete
+        ).delete()
+
+        for ingredient in ingredients:
+            _id = ingredient['ingredient_unit'].id
+            if _id in to_update:
+                curr_ingrid = instance.ingredients.filter(id=_id)
+                if curr_ingrid.exists():
+                    curr_ingrid = curr_ingrid.first()
+                    curr_ingrid.amount = ingredients['amount']
+                    curr_ingrid.save()
+                else:
+                    Ingredient.objects.create(
+                        recipes=instance,
+                        **ingredient
+                    )
+        return super().update(instance, validated_data)
+
     class Meta:
         model = Recipe
         fields = '__all__'

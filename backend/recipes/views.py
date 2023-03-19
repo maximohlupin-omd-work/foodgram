@@ -1,5 +1,6 @@
 from django.db.models import Exists
 from django.db.models import OuterRef
+from django.shortcuts import get_object_or_404
 
 from rest_framework import status
 from rest_framework import viewsets
@@ -194,6 +195,22 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
 
     def get_serializer_class(self):
-        if self.action in ('create', 'update'):
+        if self.action in ('create', 'update', 'partial_update'):
             return CreateRecipeSerializer
         return self.serializer_class
+
+    def update(self, request, *args, **kwargs):
+        if self.get_object().author == request.user:
+            return super().update(request, *args, **kwargs)
+        return Response(
+            status=status.HTTP_403_FORBIDDEN,
+            data=dict(detail="Нет доступа")
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        if self.get_object().author == request.user:
+            return super().destroy(request, *args, **kwargs)
+        return Response(
+            status=status.HTTP_403_FORBIDDEN,
+            data=dict(detail="Нет доступа")
+        )
