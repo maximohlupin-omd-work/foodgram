@@ -142,7 +142,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
                 curr_ingrid = instance.ingredients.filter(id=_id)
                 if curr_ingrid.exists():
                     curr_ingrid = curr_ingrid.first()
-                    curr_ingrid.amount = ingredients['amount']
+                    curr_ingrid.amount = ingredient['amount']
                     curr_ingrid.save()
                 else:
                     Ingredient.objects.create(
