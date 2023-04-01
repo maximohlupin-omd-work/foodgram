@@ -13,11 +13,11 @@
 ### Сборка
 
 - cd ./infra
-- docker-compose up -d -f docker-compose-prod.yml
+- docker compose -f docker-compose-prod.yml up -d
 
 ### Документация
 
-- http://localhost/api/docs/
+- http://localhost/docs/redoc.html
 
 ### Значения по умолчанию
 

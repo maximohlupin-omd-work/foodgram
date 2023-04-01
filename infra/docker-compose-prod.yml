@@ -1,0 +1,12 @@
+version: '3.3'
+services:
+  foodgram_api:
+    image: omdwork/foodgram_api:v0.0.1
+    ports:
+      - "8000:8000"
+  foodgram_server:
+    image: omdwork/foodgram_server:v0.0.1
+    ports:
+      - "80:80"
+    depends_on:
+      - foodgram_api
