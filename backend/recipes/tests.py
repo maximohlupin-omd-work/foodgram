@@ -65,10 +65,13 @@ class RecipeTestCase(APITestCase):
             **addit_recipe_data
         )
 
+        cls.recipe_1.tags.add(cls.tags[0])
+
         cls.recipe_2 = Recipe.objects.create(
             **addit_recipe_data,
         )
 
+        addit_recipe_data["author"] = another_user
         cls.recipe_3 = Recipe.objects.create(
             **addit_recipe_data,
         )
@@ -370,13 +373,13 @@ class RecipeTestCase(APITestCase):
 
     def test_get_recipe_list(self):
         guest_response = self.client.get(
-            '/recipes/'
+            '/recipes/?tags=popular'
         )
         self.assertEqual(200, guest_response.status_code,
                          "Некорректный статус при запросе списка рецептов")
         self._assert_paginated_data(guest_response.data)
         data = guest_response.data['results']
-        self.assertEqual(len(data), 3)
+        self.assertEqual(len(data), 1)
         for item in data:
             self._assert_recipe_item(item)
             self.assertFalse(
@@ -387,3 +390,49 @@ class RecipeTestCase(APITestCase):
                 item['is_favorited'],
                 "Некорректное значение в поле is_favorited"
             )
+        guest_response = self.client.get(
+            '/recipes/'
+        )
+        data = guest_response.data['results']
+        self.assertEqual(
+            len(data),
+            3,
+            'Некорректное значение вывода списка рецептов'
+        )
+
+    def test_recipes_filters(self):
+        author = self.another_user.id
+
+        author_filter = self.client.get(
+            f'/recipes/?author={author}'
+        )
+        self.assertEqual(
+            len(author_filter.data['results']),
+            1,
+            'Некорректное значение вывода списка рецептов с фильтром по автору'
+        )
+
+        self._login_request()
+
+        self.user.shop_list.recipes.add(self.recipe_1)
+        token = self.user.auth_token.key
+        in_shop_cart_filter = self.client.get(
+            '/recipes/?is_in_shopping_cart=1',
+            HTTP_AUTHORIZATION=f'Token {token}'
+        )
+        self.assertEqual(
+            len(in_shop_cart_filter.data["results"]),
+            1,
+            'Некорректное значение вывода списка рецептов с фильтром по списку покупок'
+        )
+
+        self.user.favorite.recipes.add(self.recipe_1)
+        in_favorite_filter = self.client.get(
+            '/recipes/?is_favorited=1',
+            HTTP_AUTHORIZATION=f'Token {token}'
+        )
+        self.assertEqual(
+            len(in_favorite_filter.data["results"]),
+            1,
+            'Некорректное значение вывода списка рецептов с фильтром по избранному'
+        )

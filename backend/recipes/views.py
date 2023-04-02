@@ -53,7 +53,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         query_params = self.request.query_params
-        tags = query_params.getlist('tags')
         queryset = self.queryset
         if self.request.user.is_authenticated:
             current_user = self.request.user
@@ -81,9 +80,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(
                     is_in_shopping_cart=bool(int(is_in_shopping_cart[0]))
                 )
+
+        tags = query_params.getlist('tags')
         if tags:
             queryset = queryset.filter(
                 tags__slug__in=tags
+            )
+
+        author = query_params.get('author')
+        if author:
+            queryset = queryset.filter(
+                author__id=int(author)
             )
         return queryset
 
