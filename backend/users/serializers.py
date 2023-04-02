@@ -46,7 +46,6 @@ class SubscriberRecipeSerializer(serializers.ModelSerializer):
 
 
 class SubscriptionsSerializer(UserSerializer):
-    # recipes = SubscriberRecipeSerializer(many=True)
     recipes_count = serializers.IntegerField(read_only=True)
     is_subscribed = serializers.BooleanField(default=True)
 
@@ -55,12 +54,11 @@ class SubscriptionsSerializer(UserSerializer):
         fields = (
             'recipes_count', 'email', 'id', 'username',
             'first_name', 'last_name', 'is_subscribed',
-            # 'recipes'
         )
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
-        recipes_limit = self.context["recipes_limit"]
+        recipes_limit = self.context.get("recipes_limit")
         if recipes_limit:
             recipes = instance.recipes.all()[:int(recipes_limit)]
         else:
