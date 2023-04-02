@@ -149,8 +149,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def download_shop_list(self, request):
         current_user = request.user
-        recipes = current_user.shop_list.recipes.all()
-        return download_csv(recipes)
+        ingreds_id = current_user.shop_list.recipes.values_list(
+            'ingredients__ingredient_unit__id'
+        )
+        ingreds = IngredientUnit.objects.filter(
+            id__in=[x[0] for x in ingreds_id]
+        )
+        fields = ('name', 'in_recipe_ingredient__amount', 'measurement_unit')
+        return download_csv(ingreds, fields)
 
     @action(
         methods=('post',), detail=False,
