@@ -84,11 +84,20 @@ class UserViewSet(viewsets.ModelViewSet):
         ).order_by('-id')
 
         page = self.paginate_queryset(queryset)
+
+        query_params = request.query_params
+        recipes_limit = query_params.get("recipes_limit")
+        context = dict(recipes_limit=recipes_limit)
+
         if page is not None:
-            serializer = SubscriptionsSerializer(page, many=True)
+            serializer = SubscriptionsSerializer(
+                page, many=True, context=context
+            )
             return self.get_paginated_response(serializer.data)
 
-        serializer = SubscriptionsSerializer(queryset, many=True)
+        serializer = SubscriptionsSerializer(
+            queryset, many=True, context=context
+        )
         return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):

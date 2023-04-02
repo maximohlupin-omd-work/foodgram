@@ -46,7 +46,7 @@ class SubscriberRecipeSerializer(serializers.ModelSerializer):
 
 
 class SubscriptionsSerializer(UserSerializer):
-    recipes = SubscriberRecipeSerializer(many=True)
+    # recipes = SubscriberRecipeSerializer(many=True)
     recipes_count = serializers.IntegerField(read_only=True)
     is_subscribed = serializers.BooleanField(default=True)
 
@@ -55,8 +55,19 @@ class SubscriptionsSerializer(UserSerializer):
         fields = (
             'recipes_count', 'email', 'id', 'username',
             'first_name', 'last_name', 'is_subscribed',
-            'recipes'
+            # 'recipes'
         )
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        recipes_limit = self.context["recipes_limit"]
+        if recipes_limit:
+            recipes = instance.recipes.all()[:int(recipes_limit)]
+        else:
+            recipes = instance.recipes.all()
+        recipe_serializer = SubscriberRecipeSerializer(recipes, many=True)
+        ret["recipes"] = recipe_serializer.data
+        return ret
 
 
 class PasswordSerializer(serializers.Serializer):

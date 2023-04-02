@@ -46,14 +46,12 @@ class IngredientUnitViewSet(viewsets.ModelViewSet):
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
-    serializer_class = RecipeSerializer
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthOrReadOnly,)
     http_method_names = ('get', 'post', 'patch', 'delete',)
 
-    def get_queryset(self):
+    def filter_queryset(self, queryset):
         query_params = self.request.query_params
-        queryset = self.queryset
         if self.request.user.is_authenticated:
             current_user = self.request.user
             queryset = queryset.annotate(
@@ -73,7 +71,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             is_in_shopping_cart = query_params.get('is_in_shopping_cart')
             if is_favorited:
                 queryset = queryset.filter(
-                    is_favorited=bool(int(is_favorited[0]))
+                    is_favorited=bool(int(is_favorited[0])),
                 )
 
             if is_in_shopping_cart:
@@ -209,7 +207,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action in ('create', 'update', 'partial_update'):
             return CreateRecipeSerializer
-        return self.serializer_class
+        return RecipeSerializer
 
     def update(self, request, *args, **kwargs):
         if self.get_object().author == request.user:
