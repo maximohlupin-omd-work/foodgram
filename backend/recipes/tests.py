@@ -66,6 +66,7 @@ class RecipeTestCase(APITestCase):
         )
 
         cls.recipe_1.tags.add(cls.tags[0])
+        cls.recipe_1.tags.add(cls.tags[1])
 
         cls.recipe_2 = Recipe.objects.create(
             **addit_recipe_data,
@@ -309,7 +310,7 @@ class RecipeTestCase(APITestCase):
             data=json.dumps(
                 dict(
                     name='name',
-                    tags=[1, 2],
+                    tags=[1, ],
                     ingredients=[
                         dict(
                             id=1,
@@ -373,13 +374,15 @@ class RecipeTestCase(APITestCase):
 
     def test_get_recipe_list(self):
         guest_response = self.client.get(
-            '/recipes/?tags=popular'
+            '/recipes/'
         )
-        self.assertEqual(200, guest_response.status_code,
-                         "Некорректный статус при запросе списка рецептов")
-        self._assert_paginated_data(guest_response.data)
         data = guest_response.data['results']
-        self.assertEqual(len(data), 1)
+        self.assertEqual(
+            len(data),
+            3,
+            'Некорректное значение вывода списка рецептов'
+        )
+
         for item in data:
             self._assert_recipe_item(item)
             self.assertFalse(
@@ -390,15 +393,6 @@ class RecipeTestCase(APITestCase):
                 item['is_favorited'],
                 "Некорректное значение в поле is_favorited"
             )
-        guest_response = self.client.get(
-            '/recipes/'
-        )
-        data = guest_response.data['results']
-        self.assertEqual(
-            len(data),
-            3,
-            'Некорректное значение вывода списка рецептов'
-        )
 
     def test_recipes_filters(self):
         author = self.another_user.id
@@ -435,4 +429,17 @@ class RecipeTestCase(APITestCase):
             len(in_favorite_filter.data["results"]),
             1,
             'Некорректное значение вывода списка рецептов с фильтром по избранному'
+        )
+
+        guest_response = self.client.get(
+            '/recipes/?tags=popular&tags=dinner'
+        )
+        self.assertEqual(200, guest_response.status_code,
+                         "Некорректный статус при запросе списка рецептов")
+        self._assert_paginated_data(guest_response.data)
+        data = guest_response.data['results']
+        self.assertEqual(
+            len(data),
+            1,
+            "Некорректное кол-во объектов при выводе списка рецептов"
         )

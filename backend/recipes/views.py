@@ -92,7 +92,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(
                 author__id=int(author)
             )
-        return queryset
+        return queryset.distinct()
 
     @action(
         methods=('post',), detail=False,
