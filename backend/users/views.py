@@ -47,7 +47,7 @@ class UserViewSet(viewsets.ModelViewSet):
             ).annotate(
                 is_subscribed=Exists(
                     SubscribeUser.objects.filter(
-                        owner=self.request.user,
+                        owner=current_user,
                         subscriber=OuterRef('id')
                     )
                 )
