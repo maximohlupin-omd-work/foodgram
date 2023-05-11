@@ -1,3 +1,4 @@
+backend/push_dockerhub.sh
 venv1/
 backend/static/
 backend/media/
