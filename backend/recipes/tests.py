@@ -349,6 +349,7 @@ class RecipeTestCase(APITestCase):
         token = self.user.auth_token
         self.user.shop_list.recipes.add(self.recipe_1)
         self.user.favorite.recipes.add(self.recipe_1)
+        self.user.subscribe_model.subscriber.add(self.another_user)
 
         request = self.client.get(
             '/recipes/1/',
@@ -363,6 +364,11 @@ class RecipeTestCase(APITestCase):
         data = request.data
         self._assert_not_paginated_data(data)
         self._assert_recipe_item(data)
+
+        self.assertTrue(
+            data['author']['is_subscribed']
+        )
+
         self.assertTrue(
             data['is_in_shopping_cart'],
             "Некорректное значение в поле is_in_shopping_cart"

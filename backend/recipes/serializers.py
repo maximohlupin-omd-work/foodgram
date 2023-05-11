@@ -5,6 +5,8 @@
     @ Author: Ohlupin Maxim
 
 """
+from django.db.models import Exists
+from django.db.models import OuterRef
 from django.shortcuts import get_object_or_404
 
 from rest_framework import serializers
@@ -14,6 +16,8 @@ from drf_extra_fields.fields import Base64ImageField
 from tags.models import Tag
 from tags.serializers import TagSerializer
 
+from users.models import User
+from users.models import SubscribeUser
 from users.serializers import UserSerializer
 
 from .models import Recipe
@@ -46,7 +50,8 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True)
-    author = UserSerializer(many=False)
+    # author = UserSerializer(many=False)
+    author = serializers.SerializerMethodField()
     ingredients = IngredientSerializer(many=True)
     is_in_shopping_cart = serializers.BooleanField(
         read_only=True, default=False
@@ -56,12 +61,30 @@ class RecipeSerializer(serializers.ModelSerializer):
     )
     image = serializers.SerializerMethodField()
 
-    def get_image(self, value):
+    def get_author(self, instance):
+        request = self.context["request"]
+        current_user = request.user
+
+        if current_user.is_authenticated:
+            queryset = User.objects.exclude(
+                id=current_user.id
+            ).annotate(
+                is_subscribed=Exists(
+                    SubscribeUser.objects.filter(
+                        owner=current_user,
+                        subscriber=OuterRef('id')
+                    )
+                )
+            )
+            return UserSerializer(queryset.first(), many=False).data
+        return UserSerializer(instance.author, many=False).data
+
+    def get_image(self, instance):
         request = self.context["request"]
         if request.headers.get("Host"):
             real_host = request.headers.get("Host")
-            return f"http://{real_host}{value.image.url}"
-        return request.build_absolute_uri(value.image.url)
+            return f"http://{real_host}{instance.image.url}"
+        return request.build_absolute_uri(instance.image.url)
 
     class Meta:
         model = Recipe

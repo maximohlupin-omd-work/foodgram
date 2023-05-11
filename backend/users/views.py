@@ -41,19 +41,19 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         current_user = self.request.user
-        if current_user.is_anonymous:
-            return self.queryset
-        queryset = self.queryset.exclude(
-            id=current_user.id
-        ).annotate(
-            is_subscribed=Exists(
-                SubscribeUser.objects.filter(
-                    owner=self.request.user,
-                    subscriber=OuterRef('id')
+        if current_user.is_authenticated:
+            queryset = self.queryset.exclude(
+                id=current_user.id
+            ).annotate(
+                is_subscribed=Exists(
+                    SubscribeUser.objects.filter(
+                        owner=self.request.user,
+                        subscriber=OuterRef('id')
+                    )
                 )
             )
-        )
-        return queryset
+            return queryset
+        return self.queryset
 
     def get_permissions(self):
         if self.action == 'create':
