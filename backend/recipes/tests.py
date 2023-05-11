@@ -347,12 +347,12 @@ class RecipeTestCase(APITestCase):
     def test_get_recipe_unit(self):
         self._login_request()
         token = self.user.auth_token
-        self.user.shop_list.recipes.add(self.recipe_1)
-        self.user.favorite.recipes.add(self.recipe_1)
+        self.user.shop_list.recipes.add(self.recipe_3)
+        self.user.favorite.recipes.add(self.recipe_3)
         self.user.subscribe_model.subscriber.add(self.another_user)
 
         request = self.client.get(
-            '/recipes/1/',
+            '/recipes/3/',
             HTTP_AUTHORIZATION=f'Token {token}'
         )
 

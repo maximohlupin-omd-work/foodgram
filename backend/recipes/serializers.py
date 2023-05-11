@@ -50,7 +50,6 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True)
-    # author = UserSerializer(many=False)
     author = serializers.SerializerMethodField()
     ingredients = IngredientSerializer(many=True)
     is_in_shopping_cart = serializers.BooleanField(
@@ -66,8 +65,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         current_user = request.user
 
         if current_user.is_authenticated:
-            queryset = User.objects.exclude(
-                id=current_user.id
+            queryset = User.objects.filter(
+                id=instance.author.id
             ).annotate(
                 is_subscribed=Exists(
                     SubscribeUser.objects.filter(
