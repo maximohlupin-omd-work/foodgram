@@ -17,7 +17,7 @@
 
 ### Документация
 
-- http://localhost/docs/redoc.html
+- http://localhost/docs
 
 ### Значения по умолчанию
 

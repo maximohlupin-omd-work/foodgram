@@ -131,23 +131,24 @@ class RecipeTestCase(APITestCase):
         )
         self._login_request()
         token = self.user.auth_token
-        recipe_body_create = json.dumps(
-            dict(
-                **addit_recipe_data,
-                tags=[1, 2],
-                ingredients=[
-                    dict(id=1, amount=1),
-                    dict(id=2, amount=1),
-                ]
-            )
+        recipe_dict_create = dict(
+            **addit_recipe_data,
+            tags=[1, 2],
+            ingredients=[
+                dict(id=1, amount=1),
+                dict(id=2, amount=1),
+            ]
         )
+
+        recipe_body_create = json.dumps(recipe_dict_create)
+
         create_response = self.client.post(
             '/recipes/',
             content_type='application/json',
             data=recipe_body_create,
             HTTP_AUTHORIZATION=f'Token {token}'
-
         )
+
         self.assertEqual(
             201,
             create_response.status_code,
@@ -161,6 +162,45 @@ class RecipeTestCase(APITestCase):
         self.assertEqual(
             recipe.author.id, self.user.id,
             'Автор рецепта некорректный'
+        )
+
+        recipe_dict_create.update(
+            cooking_time=-1,
+        )
+        recipe_body_create = json.dumps(recipe_dict_create)
+
+        false_response = self.client.post(
+            '/recipes/',
+            content_type='application/json',
+            data=recipe_body_create,
+            HTTP_AUTHORIZATION=f'Token {token}'
+        )
+
+        self.assertEqual(
+            400,
+            false_response.status_code,
+            "Некорректный статус при создании рецепта с отрицательным времени приготовления"
+        )
+
+        recipe_dict_create.update(
+            cooking_time=1,
+            ingredients=[
+                dict(id=1, amount=-1),
+            ]
+        )
+        recipe_body_create = json.dumps(recipe_dict_create)
+
+        false_response = self.client.post(
+            '/recipes/',
+            content_type='application/json',
+            data=recipe_body_create,
+            HTTP_AUTHORIZATION=f'Token {token}'
+        )
+
+        self.assertEqual(
+            400,
+            false_response.status_code,
+            "Некорректный статус при создании рецепта с отрицательным кол-вом ингредиента"
         )
 
     def test_in_shopping_list(self):

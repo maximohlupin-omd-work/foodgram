@@ -10,6 +10,7 @@ from django.db.models import OuterRef
 from django.shortcuts import get_object_or_404
 
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from drf_extra_fields.fields import Base64ImageField
 
@@ -130,6 +131,13 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
     )
 
     image = Base64ImageField()
+
+    @staticmethod
+    def validate_ingredients(ingredients):
+        for ingredient in ingredients:
+            if int(ingredient["amount"]) < 1:
+                raise ValidationError("Кол-во ингредиентов должно быть положительным числом")
+        return ingredients
 
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
