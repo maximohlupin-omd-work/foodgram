@@ -32,16 +32,16 @@ class IngredientUnitViewSet(viewsets.ModelViewSet):
     pagination_class = None
     http_method_names = ('get',)
 
-    def get_queryset(self):
+    def filter_queryset(self, queryset):
         query_params = self.request.query_params
 
         name_filter = query_params.get('name')
         if name_filter:
-            return self.queryset.filter(
-                name__icontains=name_filter[0]
+            return queryset.filter(
+                name__startswith=name_filter
             )
 
-        return self.queryset
+        return queryset
 
 
 class RecipeViewSet(viewsets.ModelViewSet):

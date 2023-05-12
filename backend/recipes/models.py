@@ -45,7 +45,6 @@ class IngredientUnit(models.Model):
         return f'Ингридиент {self.name}'
 
     class Meta:
-        ordering = ('-id',)
         verbose_name = 'Ингридиент'
         verbose_name_plural = 'Ингридиенты'
 
