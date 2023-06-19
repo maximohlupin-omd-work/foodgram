@@ -6,8 +6,9 @@ from tags.models import Tag
 
 from users.models import User
 
-from .models import IngredientUnit
 from .models import Recipe
+from .models import Ingredient
+from .models import IngredientUnit
 
 
 class RecipeTestCase(APITestCase):
@@ -68,11 +69,19 @@ class RecipeTestCase(APITestCase):
         cls.recipe_1.tags.add(cls.tags[0])
         cls.recipe_1.tags.add(cls.tags[1])
 
+        [
+            Ingredient.objects.create(
+                ingredient_unit=cls.ingredients[x],
+                recipes=cls.recipe_1,
+                amount=1
+            ) for x in range(2)
+        ]
+
         cls.recipe_2 = Recipe.objects.create(
             **addit_recipe_data,
         )
 
-        addit_recipe_data["author"] = another_user
+        addit_recipe_data['author'] = another_user
         cls.recipe_3 = Recipe.objects.create(
             **addit_recipe_data,
         )
@@ -97,12 +106,12 @@ class RecipeTestCase(APITestCase):
     def _assert_paginated_data(self, data):
         keys = ['count', 'next', 'previous', 'results']
         self.assertEqual(list(data.keys()), keys,
-                         "Отсутсвует пагинация в списке рецептов")
+                         'Отсутсвует пагинация в списке рецептов')
 
     def _assert_not_paginated_data(self, data):
         keys = ['count', 'next', 'previous', 'results']
         self.assertNotEqual(list(data.keys()), keys,
-                            "Пагинация не должна присутсвовать в ответе")
+                            'Пагинация не должна присутсвовать в ответе')
 
     def _assert_recipe_item(self, item):
         fields = (
@@ -111,7 +120,7 @@ class RecipeTestCase(APITestCase):
             'name', 'image', 'text', 'cooking_time'
         )
         self.assertEqual(tuple(item.keys()), fields,
-                         "Некорректный вывод элемента списка рецептов")
+                         'Некорректный вывод элемента списка рецептов')
 
     def test_create_recipe(self):
         addit_recipe_data = {
@@ -157,7 +166,7 @@ class RecipeTestCase(APITestCase):
 
         recipes = Recipe.objects.all()
         count_recipes = recipes.count()
-        recipe = Recipe.objects.get(id=create_response.data["id"])
+        recipe = Recipe.objects.get(id=create_response.data['id'])
         self.assertEqual(count_recipes, 4, 'Рецепт не создался')
         self.assertEqual(
             recipe.author.id, self.user.id,
@@ -179,7 +188,7 @@ class RecipeTestCase(APITestCase):
         self.assertEqual(
             400,
             false_response.status_code,
-            "Некорректный статус при создании рецепта с отрицательным времени приготовления"
+            'Некорректный статус при создании рецепта с отрицательным времени приготовления'
         )
 
         recipe_dict_create.update(
@@ -200,7 +209,7 @@ class RecipeTestCase(APITestCase):
         self.assertEqual(
             400,
             false_response.status_code,
-            "Некорректный статус при создании рецепта с отрицательным кол-вом ингредиента"
+            'Некорректный статус при создании рецепта с отрицательным кол-вом ингредиента'
         )
 
     def test_in_shopping_list(self):
@@ -222,11 +231,11 @@ class RecipeTestCase(APITestCase):
         )
 
         self.assertEqual(response.status_code, 201,
-                         "Некорректный запрос при добавлении в список покупок")
+                         'Некорректный запрос при добавлении в список покупок')
 
         in_list_key = self.user.shop_list.recipes.filter(id=1).exists()
 
-        self.assertTrue(in_list_key, "Рецепт не добавлен")
+        self.assertTrue(in_list_key, 'Рецепт не добавлен')
 
         delete_response = self.client.delete(
             '/recipes/1/shopping_cart/',
@@ -234,10 +243,10 @@ class RecipeTestCase(APITestCase):
         )
 
         self.assertEqual(delete_response.status_code, 204,
-                         "Некорректный запрос при удалении из списка покупок")
+                         'Некорректный запрос при удалении из списка покупок')
 
         in_list_key = self.user.shop_list.recipes.filter(id=1).exists()
-        self.assertFalse(in_list_key, "Рецепт не удален из списка покупок")
+        self.assertFalse(in_list_key, 'Рецепт не удален из списка покупок')
 
     def test_in_favorites(self):
         false_response = self.client.post(
@@ -258,11 +267,11 @@ class RecipeTestCase(APITestCase):
         )
 
         self.assertEqual(response.status_code, 201,
-                         "Некорректный запрос при добавлении в избранное")
+                         'Некорректный запрос при добавлении в избранное')
 
         in_list_key = self.user.favorite.recipes.filter(id=1).exists()
 
-        self.assertTrue(in_list_key, "Рецепт не добавлен")
+        self.assertTrue(in_list_key, 'Рецепт не добавлен')
 
         delete_response = self.client.delete(
             '/recipes/1/favorite/',
@@ -270,12 +279,14 @@ class RecipeTestCase(APITestCase):
         )
 
         self.assertEqual(delete_response.status_code, 204,
-                         "Некорректный запрос при удалении из избранных")
+                         'Некорректный запрос при удалении из избранных')
 
         in_list_key = self.user.shop_list.recipes.filter(id=1).exists()
-        self.assertFalse(in_list_key, "Рецепт не удален из избранных")
+        self.assertFalse(in_list_key, 'Рецепт не удален из избранных')
 
     def test_delete_recipe(self):
+        count_ingredients = Ingredient.objects.count()
+
         false_response = self.client.delete(
             '/recipes/1/'
         )
@@ -297,6 +308,7 @@ class RecipeTestCase(APITestCase):
             ' пользователем не являющимся автором'
         )
         token = self.user.auth_token
+
         response = self.client.delete(
             '/recipes/1/',
             HTTP_AUTHORIZATION=f'Token {token}'
@@ -305,13 +317,14 @@ class RecipeTestCase(APITestCase):
         self.assertEqual(
             204,
             response.status_code,
-            "Некорректный HTTP-статус при удалении рецепта"
+            'Некорректный HTTP-статус при удалении рецепта'
         )
 
         delete_key = Recipe.objects.filter(id=1).exists()
         count_recipes = Recipe.objects.all().count()
-        self.assertFalse(delete_key, "Рецепт не удален")
-        self.assertEqual(2, count_recipes, "Рецепт не удален")
+        self.assertFalse(delete_key, 'Рецепт не удален')
+        self.assertEqual(2, count_recipes, 'Рецепт не удален')
+        self.assertNotEqual(count_ingredients, Ingredient.objects.count(), 'Ингредиенты из рецепта не удалены')
 
     def test_update_recipe(self):
         false_response = self.client.patch(
@@ -337,7 +350,7 @@ class RecipeTestCase(APITestCase):
 
         token = self.user.auth_token
         name = self.recipe_1.name
-        tags = [x['id'] for x in self.recipe_1.tags.values("id")]
+        tags = [x['id'] for x in self.recipe_1.tags.values('id')]
         ingredients = [
             x['ingredient_unit__id'] for x in self.recipe_1.ingredients.values(
                 'ingredient_unit__id'
@@ -368,21 +381,21 @@ class RecipeTestCase(APITestCase):
         self.assertEqual(
             response.status_code,
             200,
-            "Некорректный статус при обновлении рецепта"
+            'Некорректный статус при обновлении рецепта'
         )
 
-        new_tags = [x['id'] for x in self.recipe_1.tags.values("id")]
+        new_tags = [x['id'] for x in self.recipe_1.tags.values('id')]
         new_ingredients = [
             x['ingredient_unit__id'] for x in self.recipe_1.ingredients.values(
                 'ingredient_unit__id'
             )
         ]
-        self.assertNotEqual(tags, new_tags, "Рецепт не обновился")
+        self.assertNotEqual(tags, new_tags, 'Рецепт не обновился')
         self.assertNotEqual(
-            ingredients, new_ingredients, "Рецепт не обновился"
+            ingredients, new_ingredients, 'Рецепт не обновился'
         )
         new_name = Recipe.objects.get(id=1).name
-        self.assertNotEqual(name, new_name, "Рецепт не обновился")
+        self.assertNotEqual(name, new_name, 'Рецепт не обновился')
 
     def test_get_recipe_unit(self):
         self._login_request()
@@ -398,7 +411,7 @@ class RecipeTestCase(APITestCase):
 
         self.assertEqual(
             request.status_code, 200,
-            "Некорректный статус при запросе рецепта"
+            'Некорректный статус при запросе рецепта'
         )
 
         data = request.data
@@ -411,11 +424,11 @@ class RecipeTestCase(APITestCase):
 
         self.assertTrue(
             data['is_in_shopping_cart'],
-            "Некорректное значение в поле is_in_shopping_cart"
+            'Некорректное значение в поле is_in_shopping_cart'
         )
         self.assertTrue(
             data['is_favorited'],
-            "Некорректное значение в поле is_favorited"
+            'Некорректное значение в поле is_favorited'
         )
 
     def test_get_recipe_list(self):
@@ -433,11 +446,11 @@ class RecipeTestCase(APITestCase):
             self._assert_recipe_item(item)
             self.assertFalse(
                 item['is_in_shopping_cart'],
-                "Некорректное значение в поле is_in_shopping_cart"
+                'Некорректное значение в поле is_in_shopping_cart'
             )
             self.assertFalse(
                 item['is_favorited'],
-                "Некорректное значение в поле is_favorited"
+                'Некорректное значение в поле is_favorited'
             )
 
     def test_recipes_filters(self):
@@ -461,7 +474,7 @@ class RecipeTestCase(APITestCase):
             HTTP_AUTHORIZATION=f'Token {token}'
         )
         self.assertEqual(
-            len(in_shop_cart_filter.data["results"]),
+            len(in_shop_cart_filter.data['results']),
             1,
             'Некорректное значение вывода списка рецептов с фильтром по списку покупок'
         )
@@ -472,7 +485,7 @@ class RecipeTestCase(APITestCase):
             HTTP_AUTHORIZATION=f'Token {token}'
         )
         self.assertEqual(
-            len(in_favorite_filter.data["results"]),
+            len(in_favorite_filter.data['results']),
             1,
             'Некорректное значение вывода списка рецептов с фильтром по избранному'
         )
@@ -481,11 +494,11 @@ class RecipeTestCase(APITestCase):
             '/recipes/?tags=popular&tags=dinner'
         )
         self.assertEqual(200, guest_response.status_code,
-                         "Некорректный статус при запросе списка рецептов")
+                         'Некорректный статус при запросе списка рецептов')
         self._assert_paginated_data(guest_response.data)
         data = guest_response.data['results']
         self.assertEqual(
             len(data),
             1,
-            "Некорректное кол-во объектов при выводе списка рецептов"
+            'Некорректное кол-во объектов при выводе списка рецептов'
         )
